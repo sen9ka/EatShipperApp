@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "1079769235685",
+    "firebase_url": "https://eatitv2-66e8b-default-rtdb.firebaseio.com",
+    "project_id": "eatitv2-66e8b",
+    "storage_bucket": "eatitv2-66e8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079769235685:android:4b8de9ecf8a50f4395d40c",
+        "android_client_info": {
+          "package_name": "com.senya.androideatitv2client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-RERTzjT5SkXbGDUvh4OWmuIQiNburcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079769235685:android:584b8e411bdff99a95d40c",
+        "android_client_info": {
+          "package_name": "com.senya.eatappserver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079769235685-3dda8o195vnjt8pfv3c8trlebdk96s4f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.senya.eatappserver",
+            "certificate_hash": "0009d7f49e6e96f5e1bcedd6ee36516758a5021a"
+          }
+        },
+        {
+          "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-RERTzjT5SkXbGDUvh4OWmuIQiNburcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079769235685:android:c212bf1c327f789995d40c",
+        "android_client_info": {
+          "package_name": "com.senya.eatshipperapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-RERTzjT5SkXbGDUvh4OWmuIQiNburcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079769235685-olqfd69o031mri0qbs6c9glnjkf9mb6u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
