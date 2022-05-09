@@ -12,4 +12,9 @@
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
     <string name="your_name">Your name</string>
+    <string name="_13_00_pm">13 : 00 PM</string>
+    <string name="order_number_123114512515212512">Order number: 123114512515212512</string>
+    <string name="address_12351515125125125">Address: 12351515125125125</string>
+    <string name="cash_on_delivery">Cash on Delivery</string>
+    <string name="ship_now">Ship Now</string>
 </resources>
