@@ -32,6 +32,7 @@ public class Common {
     public static final String CATEGORY_REF = "Category";
     public static final String ORDER_REF = "Order";
     public static final String SHIPPING_ORDER_REF = "ShippingOrder";
+    public static final String SHIPPING_ORDER_DATA = ":ShippingData";
     public static ShipperUserModel currentShipperUser;
     public static final String NOTI_TITLE = "title";
     public static final String NOTI_CONTENT = "content";

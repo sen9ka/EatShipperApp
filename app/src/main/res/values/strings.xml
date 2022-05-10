@@ -17,4 +17,12 @@
     <string name="address_12351515125125125">Address: 12351515125125125</string>
     <string name="cash_on_delivery">Cash on Delivery</string>
     <string name="ship_now">Ship Now</string>
+    <string name="title_activity_shipping">ShippingActivity</string>
+    <string name="date">Date</string>
+    <string name="aabcder">aabcder</string>
+    <string name="name_arsya">Name: Arsya</string>
+    <string name="address">Address</string>
+    <string name="done">Done</string>
+    <string name="call">Call</string>
+    <string name="start_trip">Start Trip</string>
 </resources>
