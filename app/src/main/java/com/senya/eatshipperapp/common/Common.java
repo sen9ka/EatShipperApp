@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.FirebaseDatabase;
 import com.senya.eatshipperapp.R;
 import com.senya.eatshipperapp.model.ShipperUserModel;
@@ -122,4 +123,18 @@ public class Common {
         return new StringBuilder("/topics/new_order").toString();
     }
 
+    public static float getBearing(LatLng begin, LatLng end) {
+        double lat = Math.abs(begin.latitude - end.latitude);
+        double lng = Math.abs(begin.longitude - end.longitude);
+
+        if(begin.latitude < end.latitude && begin.longitude < end.longitude)
+            return (float) (Math.toDegrees(Math.atan(lng/lat)));
+        else if(begin.latitude >= end.latitude && begin.longitude < end.longitude)
+            return (float) ((90 - Math.toDegrees(Math.atan(lng/lat)))+90);
+        else if(begin.latitude >= end.latitude && begin.longitude >= end.longitude)
+            return (float) (Math.toDegrees(Math.atan(lng/lat))+180);
+        else if(begin.latitude < end.latitude && begin.longitude >= end.longitude)
+            return (float) ((90 - Math.toDegrees(Math.atan(lng/lat)))+270);
+        return -1;
+    }
 }
