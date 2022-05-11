@@ -71,7 +71,7 @@ dependencies {
     implementation 'com.github.d-max:spots-dialog:1.1@aar'
 
     implementation 'com.karumi:dexter:6.2.3'
-    implementation 'com.google.android.gms:play-services-location:19.0.1'
+    implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation 'com.firebaseui:firebase-ui-auth:8.0.0'
     implementation 'com.google.firebase:firebase-storage:20.0.0'
     implementation 'com.google.firebase:firebase-messaging:23.0.3'
@@ -83,5 +83,5 @@ dependencies {
 
     implementation 'io.paperdb:paperdb:2.6'
 
-
+    implementation 'com.google.android.libraries.places:places:2.1.0'
 }

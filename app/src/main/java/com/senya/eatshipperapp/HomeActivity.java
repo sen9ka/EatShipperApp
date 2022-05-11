@@ -1,6 +1,8 @@
 package com.senya.eatshipperapp;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Toast;
@@ -25,6 +27,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.senya.eatshipperapp.common.Common;
 import com.senya.eatshipperapp.databinding.ActivityHomeBinding;
 
+import io.paperdb.Paper;
+
 public class HomeActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
@@ -41,6 +45,8 @@ public class HomeActivity extends AppCompatActivity {
 
         updateToken();
 
+        checkStartTrip();
+
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
         // Passing each menu ID as a set of Ids because each
@@ -52,6 +58,12 @@ public class HomeActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_home);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+    }
+
+    private void checkStartTrip() {
+        Paper.init(this);
+        if(!TextUtils.isEmpty(Paper.book().read(Common.TRIP_START)))
+            startActivity(new Intent(this,ShippingActivity.class));
     }
 
     private void updateToken(){

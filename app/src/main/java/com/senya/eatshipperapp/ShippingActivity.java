@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -40,6 +41,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -62,10 +68,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.paperdb.Paper;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -94,7 +102,6 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     private IGoogleAPI iGoogleAPI;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-
     @BindView(R.id.txt_order_number)
     TextView txt_order_number;
     @BindView(R.id.txt_name)
@@ -114,8 +121,22 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     @BindView(R.id.img_food_image)
     ImageView img_food_image;
 
+    AutocompleteSupportFragment places_fragment;
+    PlacesClient placesClient;
+    List<Place.Field> placeFields = Arrays.asList(Place.Field.ID,
+            Place.Field.NAME,
+            Place.Field.ADDRESS,
+            Place.Field.LAT_LNG);
+
+    @OnClick(R.id.btn_start_trip)
+    void onStartTripClick(){
+        String data = Paper.book().read(Common.SHIPPING_ORDER_DATA);
+        Paper.book().write(Common.TRIP_START,data);
+        btn_start_trip.setEnabled(false);
+    }
+
     private boolean isInit = false;
-    private Location previousLocation;
+    private Location previousLocation = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +146,9 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         setContentView(binding.getRoot());
 
         iGoogleAPI = RetrofitClient.getInstance().create(IGoogleAPI.class);
+
+        initPlaces();
+        setupAutocompletePlaces();
 
         ButterKnife.bind(this);
         buildLocationRequest();
@@ -160,9 +184,43 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
 
     }
 
+    private void setupAutocompletePlaces() {
+        places_fragment = (AutocompleteSupportFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.places_autocomplete_powered_fragment);
+        places_fragment.setPlaceFields(placeFields);
+        places_fragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                Toast.makeText(ShippingActivity.this, new StringBuilder(place.getName())
+                        .append("-")
+                        .append(place.getLatLng().toString()), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+                Toast.makeText(ShippingActivity.this, ""+status.getStatusMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void initPlaces() {
+        Places.initialize(this,getString(R.string.maps_api_key));
+        placesClient = Places.createClient(this);
+    }
+
     private void setShippingOrder() {
         Paper.init(this);
-        String data = Paper.book().read(Common.SHIPPING_ORDER_DATA);
+        String data;
+        if(TextUtils.isEmpty(Paper.book().read(Common.TRIP_START)))
+        {
+            btn_start_trip.setEnabled(true);
+            data = Paper.book().read(Common.SHIPPING_ORDER_DATA);
+        }
+        else
+        {
+            btn_start_trip.setEnabled(false);
+            data = Paper.book().read(Common.TRIP_START);
+        }
         if(!TextUtils.isEmpty(data))
         {
             shippingOrderModel = new Gson()
@@ -257,7 +315,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         compositeDisposable.add(iGoogleAPI.getDirections("driving",
                 "less_driving",
                 from,to,
-                getString(R.string.google_api_key))
+                getString(R.string.maps_api_key))
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(returnResult -> {
