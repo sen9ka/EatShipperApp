@@ -3,8 +3,8 @@
     package="com.senya.eatshipperapp">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EatShipperApp">
+
 
         <!--
              TODO: Before you run your application, you need a Google Maps API key.
@@ -59,5 +60,7 @@
             </intent-filter>
         </activity>
     </application>
+
+
 
 </manifest>
