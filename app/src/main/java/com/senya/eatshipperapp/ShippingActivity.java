@@ -41,6 +41,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -127,12 +129,15 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
             Place.Field.NAME,
             Place.Field.ADDRESS,
             Place.Field.LAT_LNG);
+    private Polyline redPolyline;
 
     @OnClick(R.id.btn_start_trip)
     void onStartTripClick(){
         String data = Paper.book().read(Common.SHIPPING_ORDER_DATA);
         Paper.book().write(Common.TRIP_START,data);
         btn_start_trip.setEnabled(false);
+
+        drawRoutes(data);
     }
 
     private boolean isInit = false;
@@ -154,7 +159,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         buildLocationRequest();
         buildLocationCallback();
 
-        setShippingOrder();
+
 
         Dexter.withActivity(this)
                 .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -204,7 +209,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     private void initPlaces() {
-        Places.initialize(this,getString(R.string.maps_api_key));
+        Places.initialize(this,getString(R.string.google_maps_key));
         placesClient = Places.createClient(this);
     }
 
@@ -223,6 +228,8 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         }
         if(!TextUtils.isEmpty(data))
         {
+
+            drawRoutes(data);
             shippingOrderModel = new Gson()
                     .fromJson(data,new TypeToken<ShippingOrderModel>(){}.getType());
             if(shippingOrderModel != null)
@@ -256,6 +263,69 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         {
             Toast.makeText(this, "Shipping order is null", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void drawRoutes(String data) {
+        ShippingOrderModel shippingOrderModel = new Gson()
+                .fromJson(data, new TypeToken<ShippingOrderModel>(){}.getType());
+
+        //add box
+        mMap.addMarker(new MarkerOptions()
+        .icon(BitmapDescriptorFactory.fromResource(R.drawable.box))
+        .title(shippingOrderModel.getOrderModel().getUserName())
+        .snippet(shippingOrderModel.getOrderModel().getShippingAddress())
+        .position(new LatLng(shippingOrderModel.getOrderModel().getLat(),
+                shippingOrderModel.getOrderModel().getLng())));
+
+        fusedLocationProviderClient.getLastLocation()
+                .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(location -> {
+                    String to = new StringBuilder()
+                            .append(shippingOrderModel.getOrderModel().getLat())
+                            .append(",")
+                            .append(shippingOrderModel.getOrderModel().getLng())
+                            .toString();
+                    String from = new StringBuilder()
+                            .append(location.getLatitude())
+                            .append(",")
+                            .append(location.getLongitude())
+                            .toString();
+
+                    compositeDisposable.add(iGoogleAPI.getDirections("driving",
+                            "less_driving",
+                            from,to,
+                            getString(R.string.google_maps_key))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(s -> {
+
+                        try {
+                            JSONObject jsonObject = new JSONObject(s);
+                            JSONArray jsonArray = jsonObject.getJSONArray("routes");
+                            for(int i = 0; i < jsonArray.length(); i++)
+                            {
+                                JSONObject route = jsonArray.getJSONObject(i);
+                                JSONObject poly = route.getJSONObject("overview_polyline");
+                                String polyline = poly.getString("points");
+                                polylineList = Common.decodePoly(polyline);
+                            }
+
+                            polylineOptions = new PolylineOptions();
+                            polylineOptions.color(Color.RED);
+                            polylineOptions.width(12);
+                            polylineOptions.startCap(new SquareCap());
+                            polylineOptions.jointType(JointType.ROUND);
+                            polylineOptions.addAll(polylineList);
+                            redPolyline = mMap.addPolyline(polylineOptions);
+                        }
+                        catch (Exception e)
+                        {
+                            Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+
+                    }, throwable -> Toast.makeText(ShippingActivity.this, ""+throwable.getMessage(), Toast.LENGTH_SHORT).show()));
+                });
+
     }
 
     private void buildLocationCallback() {
@@ -315,7 +385,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         compositeDisposable.add(iGoogleAPI.getDirections("driving",
                 "less_driving",
                 from,to,
-                getString(R.string.maps_api_key))
+                getString(R.string.google_maps_key))
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(returnResult -> {
@@ -439,6 +509,8 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        setShippingOrder();
 
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
