@@ -1,12 +1,20 @@
 package com.senya.eatshipperapp.model;
 
 public class ShippingOrderModel {
-    private String shipperPhone, shipperName;
+    private String key, shipperPhone, shipperName;
     private double currentLat, currentLng;
     private OrderModel orderModel;
     private boolean isStartTrip;
 
     public ShippingOrderModel() {
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getShipperPhone() {
