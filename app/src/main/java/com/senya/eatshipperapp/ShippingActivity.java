@@ -592,7 +592,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
                                 marker.setAnchor(0.5f,0.5f);
                                 marker.setRotation(Common.getBearing(start,newPos));
 
-                                mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
                             }
                         });
 
