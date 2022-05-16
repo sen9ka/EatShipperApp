@@ -114,13 +114,16 @@ public class Common {
     }
 
     public static void updateToken(Context context, String newToken, boolean isServer, boolean isShipper) {
-        FirebaseDatabase.getInstance()
-                .getReference(Common.TOKEN_REF)
-                .child(Common.currentShipperUser.getUid())
-                .setValue(new TokenModel(Common.currentShipperUser.getPhone(), newToken,isServer,isShipper))
-                .addOnFailureListener(e -> {
-                    Toast.makeText(context, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        if(Common.currentShipperUser != null)
+        {
+            FirebaseDatabase.getInstance()
+                    .getReference(Common.TOKEN_REF)
+                    .child(Common.currentShipperUser.getUid())
+                    .setValue(new TokenModel(Common.currentShipperUser.getPhone(), newToken,isServer,isShipper))
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
 
     public static String createTopicOrder() {

@@ -157,7 +157,26 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         Paper.book().write(Common.TRIP_START,data);
         btn_start_trip.setEnabled(false);
 
-        drawRoutes(data);
+        fusedLocationProviderClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+
+                    Map<String,Object> update_data = new HashMap<>();
+                    update_data.put("currentLat", location.getLatitude());
+                    update_data.put("currentLng", location.getLongitude());
+
+                    FirebaseDatabase.getInstance()
+                            .getReference(Common.SHIPPING_ORDER_REF)
+                            .child(shippingOrderModel.getKey())
+                            .updateChildren(update_data)
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnSuccessListener(unused -> {
+                                drawRoutes(data);
+                            });
+
+                })
+                .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private boolean isInit = false;
