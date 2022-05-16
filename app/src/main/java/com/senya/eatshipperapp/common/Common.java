@@ -107,6 +107,7 @@ public class Common {
                 .setAutoCancel(true)
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setLargeIcon(BitmapFactory.decodeResource(Resources.getSystem(), R.drawable.ic_baseline_restaurant_menu_24));
+
         if(pendingIntent != null)
             builder.setContentIntent(pendingIntent);
         Notification notification = builder.build();
