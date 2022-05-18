@@ -1,16 +1,20 @@
 package com.senya.eatshipperapp;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -99,8 +103,8 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     private ShippingOrderModel shippingOrderModel;
 
     private Handler handler;
-    private int index,next;
-    private LatLng start,end;
+    private int index, next;
+    private LatLng start, end;
     private float v;
     private double lat, lng;
     private Polyline blackPolyline, greyPolyline;
@@ -134,13 +138,44 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     private Polyline yellowPolyline;
 
     @OnClick(R.id.btn_show)
-            void onShowClick()
-    {
-        if(expandable_layout.isExpanded())
+    void onShowClick() {
+        if (expandable_layout.isExpanded())
             btn_show.setText("SHOW");
         else
             btn_show.setText("HIDE");
         expandable_layout.toggle();
+    }
+
+    @OnClick(R.id.btn_call)
+    void onCallClick() {
+        if (shippingOrderModel != null) {
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+
+                Dexter.withActivity(this)
+                        .withPermission(Manifest.permission.CALL_PHONE)
+                        .withListener(new PermissionListener() {
+                            @Override
+                            public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
+
+                            }
+
+                            @Override
+                            public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {
+                                Toast.makeText(ShippingActivity.this, "You must accept permission to call user", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {
+
+                            }
+                        }).check();
+            return;
+        }
+            Intent intent = new Intent(Intent.ACTION_CALL);
+            intent.setData(Uri.parse(new StringBuilder("Tel:")
+                    .append(shippingOrderModel.getOrderModel().getUserPhone()).toString()));
+            startActivity(intent);
     }
 
     AutocompleteSupportFragment places_fragment;
@@ -157,24 +192,54 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         Paper.book().write(Common.TRIP_START,data);
         btn_start_trip.setEnabled(false);
 
+        shippingOrderModel = new Gson().fromJson(data,new TypeToken<ShippingOrderModel>(){}.getType());
+
+        //Update
         fusedLocationProviderClient.getLastLocation()
                 .addOnSuccessListener(location -> {
 
-                    Map<String,Object> update_data = new HashMap<>();
-                    update_data.put("currentLat", location.getLatitude());
-                    update_data.put("currentLng", location.getLongitude());
+                    compositeDisposable.add(iGoogleAPI.getDirections("driving",
+                            "less_driving",
+                            Common.buildLocationString(location),
+                            new StringBuilder().append(shippingOrderModel.getOrderModel().getLat())
+                    .append(",")
+                    .append(shippingOrderModel.getOrderModel().getLng()).toString(),
+                            getString(R.string.google_maps_key))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(s -> {
 
-                    FirebaseDatabase.getInstance()
-                            .getReference(Common.SHIPPING_ORDER_REF)
-                            .child(shippingOrderModel.getKey())
-                            .updateChildren(update_data)
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                //Время через АПИ
+                                String estimateTime = "UNKNOWN";
+                                JSONObject jsonObject = new JSONObject(s);
+                                JSONArray routes = jsonObject.getJSONArray("routes");
+                                JSONObject object = routes.getJSONObject(0);
+                                JSONArray legs = object.getJSONArray("legs");
+                                JSONObject legsObject = legs.getJSONObject(0);
+                                //Время
+                                JSONObject time = legsObject.getJSONObject("duration");
+                                estimateTime = time.getString("text");
+
+                                Map<String,Object> update_data = new HashMap<>();
+                                update_data.put("currentLat", location.getLatitude());
+                                update_data.put("currentLng", location.getLongitude());
+                                update_data.put("estimateTime", estimateTime);
+
+                                FirebaseDatabase.getInstance()
+                                        .getReference(Common.SHIPPING_ORDER_REF)
+                                        .child(shippingOrderModel.getKey())
+                                        .updateChildren(update_data)
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        })
+                                        .addOnSuccessListener(unused -> {
+                                            drawRoutes(data);
+                                        });
+
+                            }, throwable -> {
+                                Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
                             })
-                            .addOnSuccessListener(unused -> {
-                                drawRoutes(data);
-                            });
-
+                    );
                 })
                 .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show());
     }
@@ -253,10 +318,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         .snippet(place.getAddress())
         .position(place.getLatLng()));
 
-
-
         //add box
-
 
         fusedLocationProviderClient.getLastLocation()
                 .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show())
@@ -481,9 +543,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     private void updateLocation(Location lastLocation) {
-        Map<String,Object> update_data = new HashMap<>();
-        update_data.put("currentLat", lastLocation.getLatitude());
-        update_data.put("currentLng", lastLocation.getLongitude());
+
 
         String data = Paper.book().read(Common.TRIP_START);
         if(!TextUtils.isEmpty(data))
@@ -492,11 +552,48 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
                     .fromJson(data,new TypeToken<ShippingOrderModel>(){}.getType());
             if(shippingOrderModel != null)
             {
-                FirebaseDatabase.getInstance()
-                        .getReference(Common.SHIPPING_ORDER_REF)
-                        .child(shippingOrderModel.getKey())
-                        .updateChildren(update_data)
-                        .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show());
+
+                compositeDisposable.add(iGoogleAPI.getDirections("driving",
+                        "less_driving",
+                        Common.buildLocationString(lastLocation),
+                        new StringBuilder().append(shippingOrderModel.getOrderModel().getLat())
+                                .append(",")
+                                .append(shippingOrderModel.getOrderModel().getLng()).toString(),
+                        getString(R.string.google_maps_key))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(s -> {
+
+                            //Время через АПИ
+                            String estimateTime = "UNKNOWN";
+                            JSONObject jsonObject = new JSONObject(s);
+                            JSONArray routes = jsonObject.getJSONArray("routes");
+                            JSONObject object = routes.getJSONObject(0);
+                            JSONArray legs = object.getJSONArray("legs");
+                            JSONObject legsObject = legs.getJSONObject(0);
+                            //Время
+                            JSONObject time = legsObject.getJSONObject("duration");
+                            estimateTime = time.getString("text");
+
+                            Map<String,Object> update_data = new HashMap<>();
+                            update_data.put("currentLat", lastLocation.getLatitude());
+                            update_data.put("currentLng", lastLocation.getLongitude());
+                            update_data.put("estimateTime", estimateTime);
+
+                            FirebaseDatabase.getInstance()
+                                    .getReference(Common.SHIPPING_ORDER_REF)
+                                    .child(shippingOrderModel.getKey())
+                                    .updateChildren(update_data)
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+
+
+                        }, throwable -> {
+                            Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                        })
+                );
+
             }
         }
         else
@@ -624,15 +721,6 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         locationRequest.setSmallestDisplacement(20f);
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;

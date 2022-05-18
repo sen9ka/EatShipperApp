@@ -10,6 +10,7 @@ import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.location.Location;
 import android.os.Build;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -177,5 +178,10 @@ public class Common {
             poly.add(p);
         }
         return poly;
+    }
+
+    public static String buildLocationString(Location location) {
+        return new StringBuilder().append(location.getLatitude()).append(",")
+                .append(location.getLongitude()).toString();
     }
 }
