@@ -11,6 +11,7 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+    <string name="sign_out">Sign Out</string>
     <string name="your_name">Your name</string>
     <string name="_13_00_pm">13 : 00 PM</string>
     <string name="order_number_123114512515212512">Order number: 123114512515212512</string>
@@ -27,4 +28,6 @@
     <string name="start_trip">Start Trip</string>
     <string name="google_maps_key">AIzaSyAZ3DCYdVbTMSaFM735f3YSUnxr8Cm15_k</string>
     <string name="show">SHOW</string>
+    <string name="restaurant_a">Restaurant a</string>
+    <string name="_20_zagorodny_prospect_yo_sup">20 zagorodny prospect yo sup</string>
 </resources>

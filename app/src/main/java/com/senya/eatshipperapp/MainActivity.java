@@ -26,7 +26,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.senya.eatshipperapp.common.Common;
+import com.senya.eatshipperapp.model.RestaurantModel;
 import com.senya.eatshipperapp.model.ShipperUserModel;
 
 import java.util.Arrays;
@@ -77,8 +80,17 @@ public class MainActivity extends AppCompatActivity {
             FirebaseUser user = firebaseAuthLocal.getCurrentUser();
             if(user != null)
             {
-                //проверка пользователя из БД
-                checkServerUserFromFirebase(user);
+                Paper.init(this);
+                String jsonEncode = Paper.book().read(Common.RESTAURANT_SAVE);
+                RestaurantModel restaurantModel = new Gson().fromJson(jsonEncode,
+                        new TypeToken<RestaurantModel>(){}.getType());
+                if(restaurantModel != null)
+                    checkServerUserFromFirebase(user,restaurantModel);
+                else
+                {
+                    startActivity(new Intent(MainActivity.this,RestaurantListActivity.class));
+                    finish();
+                }
             }
             else
             {
@@ -87,103 +99,43 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    private void checkServerUserFromFirebase(FirebaseUser user) {
+    private void checkServerUserFromFirebase(FirebaseUser user, RestaurantModel restaurantModel) {
         dialog.show();
+
+        serverRef = FirebaseDatabase.getInstance().getReference(Common.RESTAURANT_REF)
+                .child(restaurantModel.getUid())
+                .child(Common.SHIPPER_REF);
         serverRef.child(user.getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if(snapshot.exists())
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.exists())
                         {
-                            ShipperUserModel userModel = snapshot.getValue(ShipperUserModel.class);
+                            ShipperUserModel userModel = dataSnapshot.getValue(ShipperUserModel.class);
                             if(userModel.isActive())
                             {
-                                goToHomeActivity(userModel);
+                                goToHomeActivity(userModel,restaurantModel);
                             }
                             else
                             {
                                 dialog.dismiss();
-                                Toast.makeText(MainActivity.this, "Wait for the approval", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "You must be given permission by admins", Toast.LENGTH_SHORT).show();
                             }
                         }
-                        else
-                        {
-                            //пользователя нет в БД
-                            dialog.dismiss();
-                            showRegisterDialog(user);
-                        }
+                        
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        dialog.dismiss();
-                        Toast.makeText(MainActivity.this, ""+error.getMessage(), Toast.LENGTH_SHORT).show();
+
                     }
                 });
     }
 
-    private void showRegisterDialog(FirebaseUser user) {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setTitle("Register");
-        builder.setMessage("Fill In your Information \n It will be accepted later");
-
-        View itemView = LayoutInflater.from(this).inflate(R.layout.layout_register,null);
-        TextInputLayout phone_input_layout = (TextInputLayout)itemView.findViewById(R.id.phone_input_layout);
-        EditText edt_name = (EditText) itemView.findViewById(R.id.edt_name);
-        EditText edt_phone = (EditText) itemView.findViewById(R.id.edt_phone);
-
-        //Впис инф
-        if(user.getPhoneNumber() == null || TextUtils.isEmpty(user.getPhoneNumber()))
-        {
-            phone_input_layout.setHint("Email");
-            edt_phone.setText(user.getEmail());
-            edt_name.setText(user.getDisplayName());
-        }
-        else
-            edt_phone.setText(user.getPhoneNumber());
-
-        builder.setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
-                .setPositiveButton("Register", (dialogInterface, i) -> {
-                    if(TextUtils.isEmpty(edt_name.getText().toString()))
-                    {
-                        Toast.makeText(MainActivity.this, "Enter your name", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    ShipperUserModel shipperUserModel = new ShipperUserModel();
-                    shipperUserModel.setUid(user.getUid());
-                    shipperUserModel.setName(edt_name.getText().toString());
-                    shipperUserModel.setPhone(edt_phone.getText().toString());
-                    shipperUserModel.setActive(false); //по дефолту отключен включается в БД
-
-                    dialog.show();
-
-                    serverRef.child(shipperUserModel.getUid())
-                            .setValue(shipperUserModel)
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    dialog.dismiss();
-                                    Toast.makeText(MainActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
-                                }
-                            }).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            dialog.dismiss();
-                            Toast.makeText(MainActivity.this, "Successfully registered. Wait for the approval", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                });
-
-        builder.setView(itemView);
-
-        androidx.appcompat.app.AlertDialog registerDialog = builder.create();
-        registerDialog.show();
-    }
-
-    private void goToHomeActivity(ShipperUserModel serverUserModel) {
+    private void goToHomeActivity(ShipperUserModel userModel, RestaurantModel restaurantModel) {
         dialog.dismiss();
-        Common.currentShipperUser = serverUserModel;
+        Common.currentRestaurant = restaurantModel;
+        Common.currentShipperUser = userModel;
         startActivity(new Intent(this,HomeActivity.class));
         finish();
     }

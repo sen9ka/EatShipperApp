@@ -41,13 +41,13 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         homeViewModel =
-                ViewModelProviders.of(this).get(HomeViewModel.class);
+                new ViewModelProvider(this).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home,container,false);
         initViews(root);
-        homeViewModel.getMessageError().observe(this,s->{
+        homeViewModel.getMessageError().observe(getViewLifecycleOwner(),s->{
             Toast.makeText(getContext(), s, Toast.LENGTH_SHORT).show();
         });
-        homeViewModel.getShippingOrderMutableData(Common.currentShipperUser.getPhone()).observe(this, shippingOrderModelList -> {
+        homeViewModel.getShippingOrderMutableData(Common.currentShipperUser.getPhone()).observe(getViewLifecycleOwner(), shippingOrderModelList -> {
             adapter = new MyShippingOrderAdapter(getContext(),shippingOrderModelList);
             recycler_order.setAdapter(adapter);
             recycler_order.setLayoutAnimation(layoutAnimationController);
