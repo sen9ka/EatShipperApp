@@ -1,5 +1,7 @@
 package com.senya.eatshipperapp.ui.home;
 
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -35,7 +37,9 @@ public class HomeViewModel extends ViewModel implements IShippingOrderCallbackLi
     }
 
     public MutableLiveData<List<ShippingOrderModel>> getShippingOrderMutableData(String shipperPhone) {
-        loadOrderByShipper(shipperPhone);
+
+        if(shipperPhone != null && !TextUtils.isEmpty(shipperPhone))
+            loadOrderByShipper(shipperPhone);
         return shippingOrderMutableData;
     }
 

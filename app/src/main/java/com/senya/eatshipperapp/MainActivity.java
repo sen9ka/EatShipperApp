@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         providers = Arrays.asList(new AuthUI.IdpConfig.PhoneBuilder().build(), new AuthUI.IdpConfig.EmailBuilder().build());
 
-        serverRef = FirebaseDatabase.getInstance().getReference(Common.SHIPPER_REF);
+        //serverRef = FirebaseDatabase.getInstance().getReference(Common.SHIPPER_REF);
         firebaseAuth = FirebaseAuth.getInstance();
         dialog = new AlertDialog.Builder(MainActivity.this).create();
         listener = firebaseAuthLocal -> {
