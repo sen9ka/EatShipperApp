@@ -21,6 +21,11 @@ import com.senya.eatshipperapp.R;
 import com.senya.eatshipperapp.adapter.MyShippingOrderAdapter;
 import com.senya.eatshipperapp.common.Common;
 import com.senya.eatshipperapp.databinding.FragmentHomeBinding;
+import com.senya.eatshipperapp.model.eventbus.UpdateShippingOrderEvent;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -71,5 +76,25 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(EventBus.getDefault().hasSubscriberForEvent(UpdateShippingOrderEvent.class))
+            EventBus.getDefault().removeStickyEvent(UpdateShippingOrderEvent.class);
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
+    public void onUpdateShippingOrder(UpdateShippingOrderEvent event)
+    {
+        homeViewModel.getShippingOrderMutableData(Common.currentShipperUser.getPhone());
     }
 }

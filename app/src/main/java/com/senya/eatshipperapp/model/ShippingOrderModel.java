@@ -7,7 +7,17 @@ public class ShippingOrderModel {
     private boolean isStartTrip;
     private String estimateTime;
 
+    private String restaurantKey;
+
     public ShippingOrderModel() {
+    }
+
+    public String getRestaurantKey() {
+        return restaurantKey;
+    }
+
+    public void setRestaurantKey(String restaurantKey) {
+        this.restaurantKey = restaurantKey;
     }
 
     public String getKey() {

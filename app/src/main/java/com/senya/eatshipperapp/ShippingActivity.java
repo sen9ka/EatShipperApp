@@ -1,12 +1,14 @@
 package com.senya.eatshipperapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -53,7 +55,10 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.karumi.dexter.Dexter;
@@ -66,13 +71,19 @@ import com.senya.eatshipperapp.common.Common;
 import com.senya.eatshipperapp.common.LatLngInterpolator;
 import com.senya.eatshipperapp.common.MarkerAnimation;
 import com.senya.eatshipperapp.databinding.ActivityShippingBinding;
+import com.senya.eatshipperapp.model.FCMSendData;
 import com.senya.eatshipperapp.model.ShippingOrderModel;
+import com.senya.eatshipperapp.model.TokenModel;
+import com.senya.eatshipperapp.model.eventbus.UpdateShippingOrderEvent;
+import com.senya.eatshipperapp.remote.IFCMService;
 import com.senya.eatshipperapp.remote.IGoogleAPI;
 import com.senya.eatshipperapp.remote.RetrofitClient;
+import com.senya.eatshipperapp.remote.RetrofitFCMClient;
 
 
 import net.cachapa.expandablelayout.ExpandableLayout;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -111,6 +122,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     private PolylineOptions polylineOptions, blackPolylineOptions;
     private List<LatLng> polylineList;
     private IGoogleAPI iGoogleAPI;
+    private IFCMService ifcmService;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @BindView(R.id.txt_order_number)
@@ -176,6 +188,107 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
             intent.setData(Uri.parse(new StringBuilder("Tel:")
                     .append(shippingOrderModel.getOrderModel().getUserPhone()).toString()));
             startActivity(intent);
+    }
+
+    @OnClick(R.id.btn_done)
+    void onDoneClick(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Done Order")
+                .setMessage("Confirm shipping")
+                .setNegativeButton("CANCEL", (dialogInterface, which) -> dialogInterface.dismiss())
+                .setPositiveButton("YES", (dialogInterface, i) -> {
+
+                    AlertDialog dialog = new AlertDialog.Builder(this)
+                            .setCancelable(false)
+                            .setMessage("Waiting...")
+                            .create();
+                    //Update order
+                    Map<String,Object> update_data = new HashMap<>();
+                    update_data.put("orderStatus",2);
+                    update_data.put("shipperUid",Common.currentShipperUser.getUid());
+
+                    FirebaseDatabase.getInstance()
+                            .getReference(Common.RESTAURANT_REF)
+                            .child(shippingOrderModel.getRestaurantKey())
+                            .child(Common.ORDER_REF)
+                            .child(shippingOrderModel.getOrderModel().getKey())
+                            .updateChildren(update_data)
+                            .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show())
+                            .addOnSuccessListener(unused -> {
+
+                                FirebaseDatabase.getInstance()
+                                        .getReference(Common.RESTAURANT_REF)
+                                        .child(shippingOrderModel.getRestaurantKey())
+                                        .child(Common.SHIPPING_ORDER_REF)
+                                        .child(shippingOrderModel.getOrderModel().getKey())
+                                        .removeValue()
+                                        .addOnFailureListener(e -> Toast.makeText(ShippingActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show())
+                                        .addOnSuccessListener(unused1 -> {
+
+                                            FirebaseDatabase.getInstance()
+                                                    .getReference(Common.TOKEN_REF)
+                                                    .child(shippingOrderModel.getOrderModel().getUserId())
+                                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                        @Override
+                                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                                                            if(snapshot.exists())
+                                                            {
+                                                                TokenModel tokenModel = snapshot.getValue(TokenModel.class);
+                                                                Map<String,String> notiData = new HashMap<>();
+                                                                notiData.put(Common.NOTI_TITLE,"Заказ доставлен");
+                                                                notiData.put(Common.NOTI_CONTENT, new StringBuilder("Ваш заказ был доставлен ")
+                                                                        .append(Common.currentShipperUser.getPhone()).toString());
+
+                                                                FCMSendData sendData = new FCMSendData(tokenModel.getToken(),notiData);
+
+                                                                compositeDisposable.add(ifcmService.sendNotification(sendData)
+                                                                        .subscribeOn(Schedulers.io())
+                                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                                        .subscribe(fcmResponse -> {
+                                                                            dialog.dismiss();
+                                                                            if(fcmResponse.getSuccess() == 1)
+                                                                            {
+
+                                                                                Toast.makeText(ShippingActivity.this, "Finish", Toast.LENGTH_SHORT).show();
+                                                                                
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                Toast.makeText(ShippingActivity.this, "Successfully updated. Failed to notify", Toast.LENGTH_SHORT).show();
+                                                                            }
+
+                                                                            if(!TextUtils.isEmpty(Paper.book().read(Common.TRIP_START)))
+                                                                                Paper.book().delete(Common.TRIP_START);
+                                                                            EventBus.getDefault().postSticky(new UpdateShippingOrderEvent());
+                                                                            finish();
+
+                                                                        }, throwable -> {
+                                                                            dialog.dismiss();
+                                                                            Toast.makeText(ShippingActivity.this, ""+throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                        }));
+                                                            }
+                                                            else
+                                                            {
+                                                                dialog.dismiss();
+                                                                Toast.makeText(ShippingActivity.this, "Token not found", Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(@NonNull DatabaseError error) {
+                                                            dialog.dismiss();
+                                                            Toast.makeText(ShippingActivity.this, ""+error.getMessage(), Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+
+                                        });
+
+                            });
+
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     AutocompleteSupportFragment places_fragment;
@@ -257,6 +370,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         setContentView(binding.getRoot());
 
         iGoogleAPI = RetrofitClient.getInstance().create(IGoogleAPI.class);
+        ifcmService = RetrofitFCMClient.getInstance().create(IFCMService.class);
 
         initPlaces();
         setupAutocompletePlaces();
