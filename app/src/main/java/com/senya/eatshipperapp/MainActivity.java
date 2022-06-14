@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                             else
                             {
                                 dialog.dismiss();
-                                Toast.makeText(MainActivity.this, "You must be given permission by admins", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "Ждите одобрения администрации", Toast.LENGTH_SHORT).show();
                             }
                         }
                         

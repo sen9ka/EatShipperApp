@@ -174,7 +174,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
 
                             @Override
                             public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {
-                                Toast.makeText(ShippingActivity.this, "You must accept permission to call user", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ShippingActivity.this, "Вы должны принять разрешения для звонка", Toast.LENGTH_SHORT).show();
                             }
 
                             @Override
@@ -185,7 +185,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
             return;
         }
             Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse(new StringBuilder("Tel:")
+            intent.setData(Uri.parse(new StringBuilder("Тел:")
                     .append(shippingOrderModel.getOrderModel().getUserPhone()).toString()));
             startActivity(intent);
     }
@@ -193,14 +193,14 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
     @OnClick(R.id.btn_done)
     void onDoneClick(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle("Done Order")
-                .setMessage("Confirm shipping")
-                .setNegativeButton("CANCEL", (dialogInterface, which) -> dialogInterface.dismiss())
-                .setPositiveButton("YES", (dialogInterface, i) -> {
+                .setTitle("Заказ готов")
+                .setMessage("Подтвердить доставку")
+                .setNegativeButton("ОТМЕНА", (dialogInterface, which) -> dialogInterface.dismiss())
+                .setPositiveButton("ДА", (dialogInterface, i) -> {
 
                     AlertDialog dialog = new AlertDialog.Builder(this)
                             .setCancelable(false)
-                            .setMessage("Waiting...")
+                            .setMessage("Подождите...")
                             .create();
                     //Update order
                     Map<String,Object> update_data = new HashMap<>();
@@ -250,7 +250,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
                                                                             if(fcmResponse.getSuccess() == 1)
                                                                             {
 
-                                                                                Toast.makeText(ShippingActivity.this, "Finish", Toast.LENGTH_SHORT).show();
+                                                                                Toast.makeText(ShippingActivity.this, "Завершить", Toast.LENGTH_SHORT).show();
                                                                                 
                                                                             }
                                                                             else
@@ -575,7 +575,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
                     .fromJson(data,new TypeToken<ShippingOrderModel>(){}.getType());
             if(shippingOrderModel != null)
             {
-                Common.setSpanStringColor("Name: ",
+                Common.setSpanStringColor("Имя: ",
                         shippingOrderModel.getOrderModel().getUserName(),
                         txt_name,
                         Color.parseColor("#333639"));
@@ -584,12 +584,12 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
                 .append(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss")
                 .format(shippingOrderModel.getOrderModel().getCreateDate())));
 
-                Common.setSpanStringColor("No: ",
+                Common.setSpanStringColor("Номер: ",
                         shippingOrderModel.getOrderModel().getKey(),
                         txt_order_number,
                         Color.parseColor("#673ab7"));
 
-                Common.setSpanStringColor("Address: ",
+                Common.setSpanStringColor("Адрес: ",
                         shippingOrderModel.getOrderModel().getShippingAddress(),
                         txt_address,
                         Color.parseColor("#795548"));
@@ -716,7 +716,7 @@ public class ShippingActivity extends FragmentActivity implements OnMapReadyCall
         }
         else
         {
-            Toast.makeText(this, "Please start your trip", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Пожалуйтса начните доставку", Toast.LENGTH_SHORT).show();
         }
     }
 

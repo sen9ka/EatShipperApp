@@ -102,7 +102,7 @@ public class RestaurantListActivity extends AppCompatActivity implements IRestau
         ButterKnife.bind(this);
         listener = this;
 
-        dialog = new AlertDialog.Builder(this).setCancelable(false).setMessage("Please wait...")
+        dialog = new AlertDialog.Builder(this).setCancelable(false).setMessage("Подождите...")
                 .create();
         layoutAnimationController = AnimationUtils.loadLayoutAnimation(this,R.anim.layout_slide_from_left);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -171,7 +171,7 @@ public class RestaurantListActivity extends AppCompatActivity implements IRestau
                             else
                             {
                                 dialog.dismiss();
-                                Toast.makeText(RestaurantListActivity.this, "You must be given permission by admins", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RestaurantListActivity.this, "Подождите одобрения администрации", Toast.LENGTH_SHORT).show();
                             }
                         }
                         else
@@ -190,8 +190,8 @@ public class RestaurantListActivity extends AppCompatActivity implements IRestau
 
     private void showRegisterDialog(FirebaseUser user, String uid) {
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setTitle("Register");
-        builder.setMessage("Fill In your Information \n It will be accepted later");
+        builder.setTitle("Регистрация");
+        builder.setMessage("Введите информацию \n Будет одобрено позже");
 
         View itemView = LayoutInflater.from(this).inflate(R.layout.layout_register,null);
         TextInputLayout phone_input_layout = (TextInputLayout)itemView.findViewById(R.id.phone_input_layout);
@@ -201,18 +201,18 @@ public class RestaurantListActivity extends AppCompatActivity implements IRestau
         //Впис инф
         if(user.getPhoneNumber() == null || TextUtils.isEmpty(user.getPhoneNumber()))
         {
-            phone_input_layout.setHint("Email");
+            phone_input_layout.setHint("Почта");
             edt_phone.setText(user.getEmail());
             edt_name.setText(user.getDisplayName());
         }
         else
             edt_phone.setText(user.getPhoneNumber());
 
-        builder.setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
-                .setPositiveButton("Register", (dialogInterface, i) -> {
+        builder.setNegativeButton("Отмена", (dialogInterface, i) -> dialogInterface.dismiss())
+                .setPositiveButton("Регистрация", (dialogInterface, i) -> {
                     if(TextUtils.isEmpty(edt_name.getText().toString()))
                     {
-                        Toast.makeText(RestaurantListActivity.this, "Enter your name", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RestaurantListActivity.this, "Введите имя", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -240,7 +240,7 @@ public class RestaurantListActivity extends AppCompatActivity implements IRestau
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             dialog.dismiss();
-                            Toast.makeText(RestaurantListActivity.this, "Successfully registered. Wait for the approval", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RestaurantListActivity.this, "Успешная регистрация. Ждите одобрения", Toast.LENGTH_SHORT).show();
                         }
                     });
                 });

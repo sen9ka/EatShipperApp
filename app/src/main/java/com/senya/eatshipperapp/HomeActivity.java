@@ -116,14 +116,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void signOut() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Sign Out")
-                .setMessage("Do you really want to sign out?")
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setTitle("Выход")
+                .setMessage("Вы действительно хотите выйти?")
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
-                }).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                }).setPositiveButton("Ок", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Common.currentRestaurant = null;
